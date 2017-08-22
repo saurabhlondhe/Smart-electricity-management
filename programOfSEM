@@ -1,0 +1,154 @@
+#include<ESP8266WiFi.h>
+#include<FirebaseArduino.h>
+#define trig D1
+#define echo D2
+#define WIFI_SSID "Saurabh"
+#define WIFI_PASS "12345678"
+#define FB_HOST "smartelem-23f9b.firebaseio.com"
+#define FB_AUTH "lIoPmRkFQnzAS4rDvsG3lJORw2M01NJeCGKfmExW"
+String a;
+String b;
+String c;
+long duration , inches ,cm;
+void setup() {
+  // put your setup code here, to run once:
+pinMode(D5,OUTPUT);
+pinMode(D6,OUTPUT);
+pinMode(D7,OUTPUT);
+pinMode(D8,OUTPUT);
+pinMode(D3,OUTPUT);
+pinMode(D4,OUTPUT);
+pinMode(D1,OUTPUT);
+pinMode(D2,INPUT);
+Serial.begin(115200);
+WiFi.begin(WIFI_SSID,WIFI_PASS);
+Serial.print("Connecting.");
+while(WiFi.status()!=WL_CONNECTED)
+{
+  Serial.print(".");
+ delay(50);
+  
+}
+Serial.println("Connected :");
+Serial.print(WiFi.localIP());
+Firebase.begin(FB_HOST,FB_AUTH);
+Firebase.setString("tb1", "off");
+Firebase.setString("tb2", "off");
+Firebase.setString("tb3", "off");
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+
+  sense();
+
+a=Firebase.getString("tb1");
+b=Firebase.getString("tb2");
+c=Firebase.getString("tb3");
+  if(a=="\"on\""||b=="\"on\""||c=="\"on\"")
+  {
+  
+       if(inches<20)
+     {
+        sense();
+        
+              if(inches>20)
+             { Firebase.setString("tb1","off");
+                  a=Firebase.getString("tb1");
+                   Firebase.setString("tb2","off");
+                  b=Firebase.getString("tb2");
+                   Firebase.setString("tb3","off");
+                  c=Firebase.getString("tb3");
+               }    
+       }
+  }
+  else
+  {
+    Firebase.setString("tb1","off");
+    Firebase.setString("tb2","off");
+    Firebase.setString("tb3","off");
+  }
+
+  Serial.print(inches);
+  Serial.print("in, ");
+  Serial.print(cm);
+  Serial.print("cm");
+  Serial.println();
+
+
+
+Serial.print("***");
+Serial.print(a);
+Serial.print("***");
+if(a=="\"on\"")
+{
+  digitalWrite(D5,HIGH);
+  digitalWrite(D6,LOW);
+}
+else
+{
+  digitalWrite(D5,LOW);
+  digitalWrite(D6,LOW);
+}
+
+//*******************************
+
+
+Serial.print("***");
+Serial.print(b);
+Serial.print("***");
+if(b=="\"on\"")
+{
+  digitalWrite(D7,HIGH);
+  digitalWrite(D8,LOW);
+}
+else
+{
+  digitalWrite(D7,LOW);
+  digitalWrite(D8,LOW);
+}
+//******************************************
+
+
+Serial.print("***");
+Serial.print(c);
+Serial.print("***");
+if(c=="\"on\"")
+{
+  digitalWrite(D3,HIGH);
+  digitalWrite(D4,LOW);
+}
+else
+{
+  digitalWrite(D3,LOW);
+  digitalWrite(D4,LOW);
+}//*****************************************
+if (Firebase.failed()) // Check for errors {
+
+Serial.print("setting /number failed:");
+
+Serial.println(Firebase.error());
+
+}
+
+long microsecondsToInches(long microseconds) {
+ 
+  return microseconds / 74 / 2;
+}
+
+long microsecondsToCentimeters(long microseconds) {
+
+  return microseconds / 29 / 2;
+}
+void sense()
+{
+  digitalWrite(D1,LOW);
+delayMicroseconds(2);
+digitalWrite(D1,HIGH);
+delayMicroseconds(5);
+digitalWrite(D1,LOW);
+duration=pulseIn(D2,HIGH);
+  inches = microsecondsToInches(duration);
+  cm = microsecondsToCentimeters(duration);
+}
+
